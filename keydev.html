@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ro" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KEYDEV</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-family: 'Sora', sans-serif; height: 100%; overflow: hidden; }
+    body { height: 100%; overflow: hidden; background: #000; color: #fff; }
+
+    .app-wrapper { height: 100%; overflow-y: auto; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+    .section { min-height: 100%; scroll-snap-align: start; position: relative; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 2rem; }
+
+    /* Gold glow */
+    .gold-glow { text-shadow: 0 0 40px rgba(212,175,55,0.3), 0 0 80px rgba(212,175,55,0.1); }
+    .gold-border-glow { box-shadow: 0 0 20px rgba(212,175,55,0.2), inset 0 0 20px rgba(212,175,55,0.05); }
+
+    /* Intro animation */
+    .intro-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
+    .intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+    .intro-letter { display: inline-block; opacity: 0; transform: translateY(30px); animation: letterIn 0.6s forwards; font-size: clamp(3rem, 10vw, 8rem); font-weight: 800; color: #D4AF37; }
+    @keyframes letterIn { to { opacity: 1; transform: translateY(0); } }
+
+    .intro-line { width: 0; height: 2px; background: linear-gradient(90deg, transparent, #D4AF37, transparent); animation: lineExpand 1.5s 1.2s forwards; margin-top: 1rem; }
+    @keyframes lineExpand { to { width: 200px; } }
+
+    /* Particles */
+    .particle { position: absolute; width: 3px; height: 3px; background: #D4AF37; border-radius: 50%; opacity: 0; animation: particleFloat 6s infinite; }
+    @keyframes particleFloat {
+      0% { opacity: 0; transform: translateY(0) scale(0); }
+      15% { opacity: 0.7; }
+      50% { opacity: 0.5; }
+      100% { opacity: 0; transform: translateY(-120px) scale(0.3); }
+    }
+    .particles-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+
+    /* Cursor light */
+    .cursor-light { position: fixed; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%); pointer-events: none; z-index: 1; transform: translate(-50%, -50%); transition: left 0.1s, top 0.1s; }
+
+    /* Scroll reveals */
+    .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left { opacity: 0; transform: translateX(-60px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(60px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+    /* Card hover */
+    .project-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.15); backdrop-filter: blur(10px); transition: all 0.4s ease; }
+    .project-card:hover { border-color: rgba(212,175,55,0.5); box-shadow: 0 0 30px rgba(212,175,55,0.15); transform: scale(1.03); }
+
+    /* Button */
+    .btn-gold { position: relative; border: 1px solid #D4AF37; color: #D4AF37; padding: 0.8rem 2rem; overflow: hidden; transition: all 0.4s ease; }
+    .btn-gold::before { content: ''; position: absolute; inset: 0; background: #D4AF37; transform: scaleX(0); transform-origin: left; transition: transform 0.4s ease; z-index: -1; }
+    .btn-gold:hover::before { transform: scaleX(1); }
+    .btn-gold:hover { color: #000; }
+
+    /* Nav dots */
+    .nav-dots { position: fixed; right: 1.5rem; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 0.75rem; }
+    .nav-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(212,175,55,0.5); background: transparent; cursor: pointer; transition: all 0.3s; }
+    .nav-dot.active { background: #D4AF37; box-shadow: 0 0 10px rgba(212,175,55,0.5); }
+
+    /* Form */
+    .form-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 0.8rem 1rem; width: 100%; transition: border-color 0.3s; outline: none; font-family: 'Sora', sans-serif; }
+    .form-input:focus { border-color: #D4AF37; }
+
+    /* Hero title animation */
+    .hero-title-char { display: inline-block; opacity: 0; transform: translateY(20px); }
+    .hero-title-char.show { animation: charReveal 0.5s forwards; }
+    @keyframes charReveal { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 768px) {
+      .nav-dots { right: 0.75rem; }
+      .cursor-light { display: none; }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full"><!-- Intro -->
+  <div class="intro-overlay" id="intro">
+   <div>
+    <div id="intro-text" style="text-align:center;"></div>
+    <div class="intro-line" style="margin:1rem auto 0;"></div>
+   </div>
+  </div><!-- Cursor light -->
+  <div class="cursor-light" id="cursorLight"></div><!-- Nav dots -->
+  <nav class="nav-dots" id="navDots" aria-label="Navigare secțiuni"><button class="nav-dot active" data-section="0" aria-label="Acasă"></button> <button class="nav-dot" data-section="1" aria-label="Despre"></button> <button class="nav-dot" data-section="2" aria-label="Proiecte"></button> <button class="nav-dot" data-section="3" aria-label="Contact"></button>
+  </nav>
+  <div class="app-wrapper" id="wrapper"><!-- HERO -->
+   <section class="section" id="sec0">
+    <div class="particles-container" id="particles0"></div>
+    <div class="text-center relative z-10">
+     <h1 id="heroTitle" class="text-5xl md:text-7xl lg:text-8xl font-extrabold gold-glow mb-6" style="color:#D4AF37;"></h1>
+     <p id="heroSubtitle" class="text-base md:text-xl text-gray-300 max-w-xl mx-auto mb-10 opacity-0" style="transition: opacity 1s 2s ease;">Construim site-uri optimizate SEO care ajută afacerile să crească</p><a href="#sec1" class="btn-gold inline-block opacity-0" id="heroBtn" style="transition: opacity 1s 2.3s ease;">Explorează</a>
+    </div>
+   </section><!-- DESPRE --> <!-- DESPRE -->
+   <section class="section" id="sec1" style="background:#000;">
+    <div class="particles-container" id="particles1"></div>
+    <div class="max-w-2xl text-center relative z-10">
+     <h2 class="text-4xl md:text-5xl font-bold mb-16 reveal" style="color:#D4AF37;">Despre Noi</h2>
+     <p id="aboutP1" class="text-lg text-gray-300 mb-8 leading-relaxed reveal-left" style="transition-delay:0.2s;">Suntem KEYDEV, o echipă specializată în dezvoltarea de site-uri moderne, rapide și optimizate SEO.</p>
+     <p id="aboutP2" class="text-lg text-gray-300 leading-relaxed reveal-right" style="transition-delay:0.4s;">Ajutăm afacerile să își crească prezența online prin design, performanță și strategie digitală.</p>
+    </div>
+   </section><!-- PROIECTE -->
+   <section class="section" id="sec2" style="background:#000;">
+    <div class="particles-container" id="particles2"></div>
+    <div class="text-center max-w-4xl relative z-10">
+     <h2 class="text-4xl md:text-5xl font-bold mb-4 reveal" style="color:#D4AF37;">Proiecte</h2>
+     <p class="text-gray-400 mb-12 reveal" style="transition-delay:0.2s;">În curând lansăm proiecte digitale inovatoare</p>
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="project-card rounded-xl p-8 reveal" style="transition-delay:0.3s;">
+       <div class="text-3xl mb-4">
+        🌐
+       </div>
+       <h3 class="font-semibold text-lg mb-2">Web Design</h3>
+       <p class="text-gray-500 text-sm">Coming soon</p>
+      </div>
+      <div class="project-card rounded-xl p-8 reveal" style="transition-delay:0.5s;">
+       <div class="text-3xl mb-4">
+        ⚡
+       </div>
+       <h3 class="font-semibold text-lg mb-2">Performanță</h3>
+       <p class="text-gray-500 text-sm">Coming soon</p>
+      </div>
+      <div class="project-card rounded-xl p-8 reveal" style="transition-delay:0.7s;">
+       <div class="text-3xl mb-4">
+        📈
+       </div>
+       <h3 class="font-semibold text-lg mb-2">SEO</h3>
+       <p class="text-gray-500 text-sm">Coming soon</p>
+      </div>
+     </div>
+    </div>
+   </section><!-- CONTACT -->
+   <section class="section" id="sec3" style="background:#000;">
+    <div class="particles-container" id="particles3"></div>
+    <div class="max-w-lg w-full text-center relative z-10">
+     <h2 id="contactHeading" class="text-4xl md:text-5xl font-bold mb-10 reveal" style="color:#D4AF37;">Hai să lucrăm împreună</h2>
+     <form id="contactForm" class="space-y-4 reveal" style="transition-delay:0.3s;" onsubmit="handleSubmit(event)">
+      <div>
+       <label for="name" class="sr-only">Nume</label><input id="name" class="form-input rounded-lg" placeholder="Nume" required>
+      </div>
+      <div>
+       <label for="email" class="sr-only">Email</label><input id="email" type="email" class="form-input rounded-lg" placeholder="Email" required>
+      </div>
+      <div>
+       <label for="message" class="sr-only">Mesaj</label><textarea id="message" class="form-input rounded-lg" rows="4" placeholder="Mesaj" required></textarea>
+      </div><button type="submit" class="btn-gold w-full rounded-lg font-semibold">Trimite mesajul</button>
+     </form>
+     <p id="formSuccess" class="text-green-400 mt-4 hidden">Mesajul a fost trimis! ✨</p>
+     <div class="mt-10 text-gray-500 text-sm reveal" style="transition-delay:0.5s;">
+      <p>contact@keydev.ro</p>
+      <div class="flex justify-center gap-4 mt-3"><i data-lucide="instagram" style="width:18px;height:18px;color:#D4AF37;"></i> <i data-lucide="linkedin" style="width:18px;height:18px;color:#D4AF37;"></i> <i data-lucide="twitter" style="width:18px;height:18px;color:#D4AF37;"></i>
+      </div>
+     </div>
+    </div>
+   </section>
+  </div>
+  <script>
+    // Config
+    const defaultConfig = {
+      hero_title: 'KEYDEV',
+      hero_subtitle: 'Construim site-uri optimizate SEO care ajută afacerile să crească',
+      about_text_1: 'Suntem KEYDEV, o echipă specializată în dezvoltarea de site-uri moderne, rapide și optimizate SEO.',
+      about_text_2: 'Ajutăm afacerile să își crească prezența online prin design, performanță și strategie digitală.',
+      contact_heading: 'Hai să lucrăm împreună',
+      background_color: '#000000',
+      surface_color: '#111111',
+      text_color: '#FFFFFF',
+      primary_color: '#D4AF37',
+      secondary_color: '#888888',
+      font_family: 'Sora',
+      font_size: 16
+    };
+
+    let currentSection = 0;
+    const wrapper = document.getElementById('wrapper');
+    const sections = document.querySelectorAll('.section');
+    const dots = document.querySelectorAll('.nav-dot');
+
+    // Intro animation
+    const introText = document.getElementById('intro-text');
+    const letters = 'KEYDEV'.split('');
+    letters.forEach((l, i) => {
+      const span = document.createElement('span');
+      span.className = 'intro-letter';
+      span.style.animationDelay = `${i * 0.15}s`;
+      span.textContent = l;
+      introText.appendChild(span);
+    });
+
+    setTimeout(() => {
+      document.getElementById('intro').classList.add('fade-out');
+      setTimeout(() => { document.getElementById('intro').remove(); showHero(); }, 800);
+    }, 2500);
+
+    function showHero() {
+      const title = document.getElementById('heroTitle');
+      const text = defaultConfig.hero_title;
+      title.innerHTML = '';
+      text.split('').forEach((c, i) => {
+        const span = document.createElement('span');
+        span.className = 'hero-title-char';
+        span.textContent = c;
+        title.appendChild(span);
+        setTimeout(() => span.classList.add('show'), i * 100);
+      });
+      setTimeout(() => {
+        document.getElementById('heroSubtitle').style.opacity = '1';
+        document.getElementById('heroBtn').style.opacity = '1';
+      }, text.length * 100 + 200);
+    }
+
+    // Particles on all sections
+    function createParticles(containerId, count = 25) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.bottom = Math.random() * 100 + '%';
+        p.style.animationDelay = Math.random() * 6 + 's';
+        container.appendChild(p);
+      }
+    }
+    createParticles('particles0', 25);
+    createParticles('particles1', 20);
+    createParticles('particles2', 20);
+    createParticles('particles3', 20);
+
+    // Cursor light
+    document.addEventListener('mousemove', e => {
+      const cl = document.getElementById('cursorLight');
+      if (cl) { cl.style.left = e.clientX + 'px'; cl.style.top = e.clientY + 'px'; }
+    });
+
+    // Scroll & nav
+    wrapper.addEventListener('scroll', () => {
+      const scrollTop = wrapper.scrollTop;
+      const h = wrapper.clientHeight;
+      const idx = Math.round(scrollTop / h);
+      if (idx !== currentSection) { currentSection = idx; updateDots(); }
+      checkReveals();
+    });
+
+    dots.forEach(d => d.addEventListener('click', () => {
+      const idx = parseInt(d.dataset.section);
+      sections[idx].scrollIntoView({ behavior: 'smooth' });
+    }));
+
+    function updateDots() {
+      dots.forEach((d, i) => d.classList.toggle('active', i === currentSection));
+    }
+
+    // Reveal on scroll
+    function checkReveals() {
+      document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.85) el.classList.add('visible');
+      });
+    }
+    setTimeout(checkReveals, 100);
+
+    // Form
+    function handleSubmit(e) {
+      e.preventDefault();
+      document.getElementById('formSuccess').classList.remove('hidden');
+      e.target.reset();
+      setTimeout(() => document.getElementById('formSuccess').classList.add('hidden'), 3000);
+    }
+
+    // Element SDK
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => {
+        const font = config.font_family || defaultConfig.font_family;
+        const size = config.font_size || defaultConfig.font_size;
+        document.body.style.fontFamily = `${font}, sans-serif`;
+        document.body.style.fontSize = size + 'px';
+
+        document.getElementById('heroSubtitle').textContent = config.hero_subtitle || defaultConfig.hero_subtitle;
+        document.getElementById('aboutP1').textContent = config.about_text_1 || defaultConfig.about_text_1;
+        document.getElementById('aboutP2').textContent = config.about_text_2 || defaultConfig.about_text_2;
+        document.getElementById('contactHeading').textContent = config.contact_heading || defaultConfig.contact_heading;
+
+        // Colors
+        const bg = config.background_color || defaultConfig.background_color;
+        const primary = config.primary_color || defaultConfig.primary_color;
+        const text = config.text_color || defaultConfig.text_color;
+
+        document.body.style.background = bg;
+        sections.forEach(s => s.style.background = bg);
+        document.body.style.color = text;
+
+        document.querySelectorAll('[style*="color:#D4AF37"], .gold-glow').forEach(el => {
+          el.style.color = primary;
+        });
+      },
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          { get: () => config.background_color || defaultConfig.background_color, set: v => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+          { get: () => config.surface_color || defaultConfig.surface_color, set: v => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+          { get: () => config.text_color || defaultConfig.text_color, set: v => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+          { get: () => config.primary_color || defaultConfig.primary_color, set: v => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } },
+          { get: () => config.secondary_color || defaultConfig.secondary_color, set: v => { config.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); } }
+        ],
+        borderables: [],
+        fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: v => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+        fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: v => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ['hero_title', config.hero_title || defaultConfig.hero_title],
+        ['hero_subtitle', config.hero_subtitle || defaultConfig.hero_subtitle],
+        ['about_text_1', config.about_text_1 || defaultConfig.about_text_1],
+        ['about_text_2', config.about_text_2 || defaultConfig.about_text_2],
+        ['contact_heading', config.contact_heading || defaultConfig.contact_heading]
+      ])
+    });
+
+    lucide.createIcons();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a01f57e2e8e1f7eb',t:'MTc3OTgyNTM4Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
